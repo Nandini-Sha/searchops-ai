@@ -101,7 +101,8 @@ def ingest_github():
                     author_name="Unknown" # We didn't add author to github files strictly, except in README
                 )
 
-if __name__ == "__main__":
+def run_ingestion():
+    print("Starting auto-ingestion process...")
     # Clear existing data in PG
     cur.execute("TRUNCATE TABLE documents RESTART IDENTITY;")
     
@@ -110,6 +111,9 @@ if __name__ == "__main__":
     ingest_github()
     
     conn.commit()
+    print("Ingestion complete!")
+
+if __name__ == "__main__":
+    run_ingestion()
     cur.close()
     conn.close()
-    print("Ingestion complete!")
