@@ -8,10 +8,14 @@ from chromadb.utils import embedding_functions # type: ignore
 # Connect to PostgreSQL
 pg_host = os.environ.get("POSTGRES_HOST", "localhost")
 pg_port = os.environ.get("POSTGRES_PORT", "5433")
+pg_user = os.environ.get("POSTGRES_USER", "admin")
+pg_password = os.environ.get("POSTGRES_PASSWORD", "adminpassword")
+pg_dbname = os.environ.get("POSTGRES_DB", "searchops")
+
 conn = psycopg2.connect(
-    dbname="searchops",
-    user="admin",
-    password="adminpassword",
+    dbname=pg_dbname,
+    user=pg_user,
+    password=pg_password,
     host=pg_host,
     port=pg_port
 )

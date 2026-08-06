@@ -31,11 +31,15 @@ def startup_event():
     pg_host = os.environ.get("POSTGRES_HOST", "localhost")
     pg_port = os.environ.get("POSTGRES_PORT", "5432") # Default internal docker port
     
+    pg_user = os.environ.get("POSTGRES_USER", "admin")
+    pg_password = os.environ.get("POSTGRES_PASSWORD", "adminpassword")
+    pg_dbname = os.environ.get("POSTGRES_DB", "searchops")
+    
     try:
         conn = psycopg2.connect(
-            dbname="searchops",
-            user="admin",
-            password="adminpassword",
+            dbname=pg_dbname,
+            user=pg_user,
+            password=pg_password,
             host=pg_host,
             port=pg_port
         )
