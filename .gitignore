@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+env/
+.env
+
+# Node
+node_modules/
+dist/
+.DS_Store
+
+# Databases & Data
+data/
+db/
+*.db
+*.sqlite3
+
+# IDEs
+.vscode/
+.idea/
+*.swp
