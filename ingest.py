@@ -107,6 +107,10 @@ def ingest_github():
 
 def run_ingestion():
     print("Starting auto-ingestion process...")
+    # Initialize database schema if it doesn't exist
+    with open("db/init.sql", "r") as f:
+        cur.execute(f.read())
+        
     # Clear existing data in PG
     cur.execute("TRUNCATE TABLE documents RESTART IDENTITY;")
     

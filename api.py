@@ -44,8 +44,13 @@ def startup_event():
             port=pg_port
         )
         cur = conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM documents")
-        count = cur.fetchone()[0]
+        try:
+            cur.execute("SELECT COUNT(*) FROM documents")
+            count = cur.fetchone()[0]
+        except psycopg2.Error:
+            conn.rollback()
+            count = 0
+            
         cur.close()
         conn.close()
         
