@@ -108,8 +108,19 @@ def ingest_github():
 def run_ingestion():
     print("Starting auto-ingestion process...")
     # Initialize database schema if it doesn't exist
-    with open("db/init.sql", "r") as f:
-        cur.execute(f.read())
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS documents (
+            id SERIAL PRIMARY KEY,
+            doc_id UUID DEFAULT gen_random_uuid(),
+            source_type VARCHAR(50) NOT NULL,
+            source_url VARCHAR(255),
+            title VARCHAR(255),
+            content TEXT NOT NULL,
+            author_name VARCHAR(255),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            metadata JSONB
+        );
+    """)
         
     # Clear existing data in PG
     cur.execute("TRUNCATE TABLE documents RESTART IDENTITY;")
