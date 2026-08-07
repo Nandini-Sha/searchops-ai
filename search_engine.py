@@ -65,31 +65,35 @@ class HybridSearchEngine:
             
             # Find documents where author name matches phonetically, or content/title contains keyword
             like_term = f"%{word}%"
-            self.cur.execute("""
-                SELECT doc_id, title, author_name, content, source_type 
-                FROM documents
-                WHERE 
-                    soundex(author_name) = soundex(%s) OR 
-                    title ILIKE %s OR
-                    content ILIKE %s
-                LIMIT %s
-            """, (word, like_term, like_term, k))
-            
-            rows = self.cur.fetchall()
-            for row in rows:
-                doc_id, title, author, content, source_type = row
+            try:
+                self.cur.execute("""
+                    SELECT doc_id, title, author_name, content, source_type 
+                    FROM documents
+                    WHERE 
+                        soundex(author_name) = soundex(%s) OR 
+                        title ILIKE %s OR
+                        content ILIKE %s
+                    LIMIT %s
+                """, (word, like_term, like_term, k))
                 
-                # Check if we already added this doc
-                if not any(r['doc_id'] == doc_id for r in search_results):
-                    search_results.append({
-                        "doc_id": doc_id,
-                        "score": 1.0, # Flat score for SQL matches
-                        "title": title,
-                        "author_name": author,
-                        "content_snippet": content[:150] + "...",
-                        "source": "sql_phonetic",
-                        "source_type": source_type
-                    })
+                rows = self.cur.fetchall()
+                for row in rows:
+                    doc_id, title, author, content, source_type = row
+                    
+                    # Check if we already added this doc
+                    if not any(r['doc_id'] == doc_id for r in search_results):
+                        search_results.append({
+                            "doc_id": doc_id,
+                            "score": 1.0, # Flat score for SQL matches
+                            "title": title,
+                            "author_name": author,
+                            "content_snippet": content[:150] + "...",
+                            "source": "sql_phonetic",
+                            "source_type": source_type
+                        })
+            except psycopg2.Error as e:
+                print(f"SQL Phonetic Search failed (fallback to vector only): {e}")
+                self.conn.rollback()
         
         return search_results[:k]
 
