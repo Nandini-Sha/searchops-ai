@@ -70,11 +70,11 @@ class HybridSearchEngine:
                     SELECT doc_id, title, author_name, content, source_type 
                     FROM documents
                     WHERE 
-                        soundex(author_name) = soundex(%s) OR 
+                        author_name ILIKE %s OR 
                         title ILIKE %s OR
                         content ILIKE %s
                     LIMIT %s
-                """, (word, like_term, like_term, k))
+                """, (like_term, like_term, like_term, k))
                 
                 rows = self.cur.fetchall()
                 for row in rows:
