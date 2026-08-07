@@ -57,6 +57,10 @@ def startup_event():
         if count == 0:
             print("Database empty! Running auto-ingestion for ephemeral deployment...")
             run_ingestion()
+            # Re-initialize the search engine to ensure it picks up the newly ingested ChromaDB data
+            # and gets a fresh PostgreSQL connection state.
+            global engine
+            engine = HybridSearchEngine()
         else:
             print(f"Found {count} documents. Skipping auto-ingestion.")
     except Exception as e:
