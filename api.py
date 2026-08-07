@@ -46,23 +46,29 @@ def startup_event():
         cur = conn.cursor()
         try:
             cur.execute("SELECT COUNT(*) FROM documents")
-            count = cur.fetchone()[0]
+            pg_count = cur.fetchone()[0]
         except psycopg2.Error:
             conn.rollback()
-            count = 0
+            pg_count = 0
             
         cur.close()
         conn.close()
         
-        if count == 0:
-            print("Database empty! Running auto-ingestion for ephemeral deployment...")
+        # Also check ChromaDB, because Render wipes the disk on sleep but keeps Postgres!
+        try:
+            col = engine.chroma_client.get_collection("documents")
+            chroma_count = col.count()
+        except ValueError:
+            chroma_count = 0
+        
+        if pg_count == 0 or chroma_count == 0:
+            print(f"DB Check - Postgres: {pg_count}, Chroma: {chroma_count}. Running auto-ingestion...")
             run_ingestion()
             # Re-initialize the search engine to ensure it picks up the newly ingested ChromaDB data
-            # and gets a fresh PostgreSQL connection state.
             global engine
             engine = HybridSearchEngine()
         else:
-            print(f"Found {count} documents. Skipping auto-ingestion.")
+            print(f"Found {pg_count} Postgres docs and {chroma_count} Chroma docs. Skipping auto-ingestion.")
     except Exception as e:
         print(f"Startup DB check failed (this is normal if DB is still booting): {e}")
 
