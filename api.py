@@ -27,6 +27,7 @@ engine = HybridSearchEngine()
 
 @app.on_event("startup")
 def startup_event():
+    global engine
     # Check if database is empty (ephemeral disk on Render free tier)
     pg_host = os.environ.get("POSTGRES_HOST", "localhost")
     pg_port = os.environ.get("POSTGRES_PORT", "5432") # Default internal docker port
@@ -65,7 +66,6 @@ def startup_event():
             print(f"DB Check - Postgres: {pg_count}, Chroma: {chroma_count}. Running auto-ingestion...")
             run_ingestion()
             # Re-initialize the search engine to ensure it picks up the newly ingested ChromaDB data
-            global engine
             engine = HybridSearchEngine()
         else:
             print(f"Found {pg_count} Postgres docs and {chroma_count} Chroma docs. Skipping auto-ingestion.")
