@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y gcc g++ libpq-dev && rm -rf /var/lib/ap
 
 # Install python dependencies
 COPY requirements.txt .
-RUN pip install --default-timeout=100 torch==2.3.0+cpu --index-url https://download.pytorch.org/whl/cpu
+RUN pip install --default-timeout=100 --extra-index-url https://download.pytorch.org/whl/cpu torch
 RUN pip install --default-timeout=100 -r requirements.txt
 
 # Copy backend files
