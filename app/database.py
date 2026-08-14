@@ -1,5 +1,5 @@
 import psycopg # type: ignore
-from psycopg.pool import ConnectionPool # type: ignore
+from psycopg_pool import ConnectionPool # type: ignore
 import chromadb # type: ignore
 from chromadb.utils import embedding_functions # type: ignore
 from app.config import settings
