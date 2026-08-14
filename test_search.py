@@ -1,6 +1,8 @@
-from search_engine import HybridSearchEngine
+from app.services.search import HybridSearchEngine
+from app.database import init_db, close_db
 
 def run_tests():
+    init_db()
     engine = HybridSearchEngine()
     
     print("===========================================")
@@ -28,7 +30,7 @@ def run_tests():
     for i, res in enumerate(results):
         print(f"Rank {i+1}: {res['title']} (Score: {res['rrf_score']}, Source: {res['source']})")
         
-    engine.close()
+    close_db()
 
 if __name__ == "__main__":
     run_tests()

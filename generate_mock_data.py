@@ -2,6 +2,7 @@ import json
 import os
 import uuid
 from datetime import datetime, timedelta
+from config import settings
 
 def generate_slack_messages():
     messages = [
@@ -42,13 +43,14 @@ def generate_slack_messages():
         }
     ]
     
-    os.makedirs("data/mock", exist_ok=True)
-    with open("data/mock/slack_messages.json", "w", encoding="utf-8") as f:
+    os.makedirs(settings.MOCK_DATA_DIR, exist_ok=True)
+    with open(os.path.join(settings.MOCK_DATA_DIR, "slack_messages.json"), "w", encoding="utf-8") as f:
         json.dump(messages, f, indent=4)
     print("Created mock Slack messages.")
 
 def generate_confluence_docs():
-    os.makedirs("data/mock/confluence_docs", exist_ok=True)
+    confluence_dir = os.path.join(settings.MOCK_DATA_DIR, "confluence_docs")
+    os.makedirs(confluence_dir, exist_ok=True)
     
     docs = {
         "incident_response.md": """# Incident Response Playbook
@@ -83,13 +85,14 @@ Do NOT use the old `legacy_handlers.py` logic.
     }
     
     for filename, content in docs.items():
-        with open(f"data/mock/confluence_docs/{filename}", "w", encoding="utf-8") as f:
+        with open(os.path.join(confluence_dir, filename), "w", encoding="utf-8") as f:
             f.write(content)
     print("Created mock Confluence docs.")
 
 def generate_github_repos():
-    os.makedirs("data/mock/github_repos/auth-v1", exist_ok=True)
-    os.makedirs("data/mock/github_repos/backend-api", exist_ok=True)
+    github_dir = os.path.join(settings.MOCK_DATA_DIR, "github_repos")
+    os.makedirs(os.path.join(github_dir, "auth-v1"), exist_ok=True)
+    os.makedirs(os.path.join(github_dir, "backend-api"), exist_ok=True)
     
     files = {
         "auth-v1/legacy_handlers.py": """
@@ -114,7 +117,10 @@ def health_check():
     }
     
     for filepath, content in files.items():
-        with open(f"data/mock/github_repos/{filepath}", "w", encoding="utf-8") as f:
+        # Ensure subdirectories exist if there are deeper paths
+        file_full_path = os.path.join(github_dir, filepath)
+        os.makedirs(os.path.dirname(file_full_path), exist_ok=True)
+        with open(file_full_path, "w", encoding="utf-8") as f:
             f.write(content.strip() + "\n")
     print("Created mock GitHub repos.")
 

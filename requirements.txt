@@ -1,7 +1,10 @@
-chromadb==0.4.24
-sentence-transformers==2.5.1
-psycopg2-binary==2.9.9
-pydantic==2.6.4
-numpy<2.0.0
+chromadb
+sentence-transformers
+psycopg
+psycopg-binary>=3.0.0
+pydantic
+numpy
 fastapi>=0.100.0
 uvicorn>=0.23.0
+python-dotenv
+psycopg-pool>=3.2.1
