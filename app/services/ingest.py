@@ -1,34 +1,50 @@
 import json
 import os
 import uuid
+import requests
 import psycopg # type: ignore
 from app.config import settings
-from app.database import get_pg_connection, get_chroma_collection
+from app.database import get_pg_connection
 import logging
 
 logger = logging.getLogger(__name__)
 
+def get_huggingface_embedding(text: str) -> list[float]:
+    hf_token = settings.HF_TOKEN
+    model = settings.EMBEDDING_MODEL_NAME
+    if not hf_token:
+        raise ValueError("HF_TOKEN is required for vector generation.")
+    
+    api_url = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{model}"
+    headers = {"Authorization": f"Bearer {hf_token}"}
+    
+    response = requests.post(api_url, headers=headers, json={"inputs": [text]})
+    if response.status_code != 200:
+        raise Exception(f"Failed to get embedding: {response.text}")
+    
+    result = response.json()
+    if isinstance(result, list) and isinstance(result[0], list):
+        return result[0]
+    return result
+
 def insert_document(source_type, source_url, title, content, author_name):
     doc_id = str(uuid.uuid4())
     
-    # 1. Insert into PostgreSQL
+    text_to_embed = f"Title: {title}\nAuthor: {author_name}\nContent: {content}"
+    try:
+        embedding = get_huggingface_embedding(text_to_embed)
+    except Exception as e:
+        logger.error(f"Error getting embedding for {title}: {e}")
+        return
+
+    # Insert into PostgreSQL
     with get_pg_connection() as conn:
         with conn.cursor() as cur:
             cur.execute("""
-                INSERT INTO documents (doc_id, source_type, source_url, title, content, author_name)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """, (doc_id, source_type, source_url, title, content, author_name))
+                INSERT INTO documents (doc_id, source_type, source_url, title, content, author_name, embedding)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (doc_id, source_type, source_url, title, content, author_name, embedding))
             conn.commit()
-    
-    # 2. Insert into ChromaDB
-    collection = get_chroma_collection()
-    text_to_embed = f"Title: {title}\nAuthor: {author_name}\nContent: {content}"
-    
-    collection.add(
-        documents=[text_to_embed],
-        metadatas=[{"source_type": source_type, "source_url": source_url, "author_name": author_name, "title": title}],
-        ids=[doc_id]
-    )
 
 def ingest_slack():
     logger.info("Ingesting Slack messages...")
@@ -107,23 +123,15 @@ def run_ingestion():
                     content TEXT NOT NULL,
                     author_name VARCHAR(255),
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    metadata JSONB
+                    metadata JSONB,
+                    embedding vector(384)
                 );
             """)
             
             # Clear existing data in PG
             cur.execute("TRUNCATE TABLE documents RESTART IDENTITY;")
             conn.commit()
-    
-    # We also need to clear ChromaDB, let's just delete the documents if collection exists, but we are keeping it simple for now as it handles duplicates somewhat.
-    # Actually, we should probably clear the ChromaDB collection if we are truncating Postgres to keep them in sync.
-    # For now, let's proceed with ingestion.
-    try:
-        collection = get_chroma_collection()
-        collection.delete(where={})
-    except Exception as e:
-        logger.warning(f"Could not clear ChromaDB collection: {e}")
-        
+            
     try:
         import generate_mock_data
         generate_mock_data.generate_slack_messages()

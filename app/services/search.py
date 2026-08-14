@@ -1,34 +1,49 @@
 import psycopg # type: ignore
-from app.database import get_pg_connection, get_chroma_collection
+from app.database import get_pg_connection
 from typing import List, Dict, Any
+from app.services.ingest import get_huggingface_embedding
+import logging
+
+logger = logging.getLogger(__name__)
 
 class HybridSearchEngine:
     def vector_search(self, query: str, k: int = 5) -> List[Dict[str, Any]]:
-        """Semantic search using Vector Embeddings via ChromaDB"""
-        collection = get_chroma_collection()
-        results = collection.query(
-            query_texts=[query],
-            n_results=k
-        )
-        
-        # Parse ChromaDB output
-        search_results = []
-        if results['ids']:
-            ids = results['ids'][0]
-            distances = results['distances'][0] if results['distances'] is not None else []
-            metadatas = results['metadatas'][0] if results['metadatas'] is not None else []
-            documents = results['documents'][0] if results['documents'] is not None else []
+        """Semantic search using Vector Embeddings via pgvector"""
+        try:
+            query_embedding = get_huggingface_embedding(query)
+        except Exception as e:
+            logger.error(f"Failed to get query embedding: {e}")
+            return []
             
-            for i in range(len(ids)):
-                search_results.append({
-                    "doc_id": ids[i],
-                    "score": 1.0 / (1.0 + distances[i]), # Convert distance to a pseudo-score (higher is better)
-                    "title": metadatas[i].get("title", ""),
-                    "author_name": metadatas[i].get("author_name", ""),
-                    "content_snippet": documents[i][:150] + "...",
-                    "source": "vector",
-                    "source_type": metadatas[i].get("source_type", "")
-                })
+        search_results = []
+        with get_pg_connection() as conn:
+            with conn.cursor() as cur:
+                try:
+                    # Use cosine distance <=>
+                    cur.execute("""
+                        SELECT doc_id, title, author_name, content, source_type, 1 - (embedding <=> %s::vector) AS score
+                        FROM documents
+                        WHERE embedding IS NOT NULL
+                        ORDER BY embedding <=> %s::vector
+                        LIMIT %s
+                    """, (query_embedding, query_embedding, k))
+                    
+                    rows = cur.fetchall()
+                    for row in rows:
+                        doc_id, title, author, content, source_type, score = row
+                        search_results.append({
+                            "doc_id": str(doc_id),
+                            "score": float(score),
+                            "title": title,
+                            "author_name": author,
+                            "content_snippet": content[:150] + "...",
+                            "source": "vector",
+                            "source_type": source_type
+                        })
+                except psycopg.Error as e:
+                    logger.error(f"SQL Vector Search failed: {e}")
+                    conn.rollback()
+                    
         return search_results
 
     def phonetic_search(self, query: str, k: int = 5) -> List[Dict[str, Any]]:

@@ -9,7 +9,7 @@ import uvicorn
 from contextlib import asynccontextmanager
 import logging
 
-from app.database import init_db, close_db, get_pg_connection, get_chroma_collection
+from app.database import init_db, close_db, get_pg_connection
 from app.services.search import HybridSearchEngine
 from app.services.ingest import run_ingestion
 from app.config import settings
@@ -53,17 +53,11 @@ async def lifespan(app: FastAPI):
                     conn.rollback()
                     pg_count = 0
                     
-        try:
-            col = get_chroma_collection()
-            chroma_count = col.count()
-        except ValueError:
-            chroma_count = 0
-            
-        if pg_count == 0 or chroma_count == 0:
-            logger.info(f"DB Check - Postgres: {pg_count}, Chroma: {chroma_count}. Running auto-ingestion...")
+        if pg_count == 0:
+            logger.info(f"DB Check - Postgres: {pg_count}. Running auto-ingestion...")
             run_ingestion()
         else:
-            logger.info(f"Found {pg_count} Postgres docs and {chroma_count} Chroma docs. Skipping auto-ingestion.")
+            logger.info(f"Found {pg_count} Postgres docs. Skipping auto-ingestion.")
             
     except Exception as e:
         logger.error(f"Startup failed: {e}")
