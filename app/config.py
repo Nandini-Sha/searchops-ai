@@ -7,6 +7,7 @@ load_dotenv()
 
 class Settings:
     # PostgreSQL Configuration
+    DATABASE_URL: str | None = os.getenv("DATABASE_URL")
     POSTGRES_USER: str = os.getenv("POSTGRES_USER", "admin")
     POSTGRES_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "adminpassword")
     POSTGRES_DB: str = os.getenv("POSTGRES_DB", "searchops")
@@ -15,7 +16,8 @@ class Settings:
 
     # ChromaDB Configuration
     CHROMA_DB_PATH: str = os.getenv("CHROMA_DB_PATH", "./data/chroma")
-    EMBEDDING_MODEL_NAME: str = os.getenv("EMBEDDING_MODEL_NAME", "all-MiniLM-L6-v2")
+    EMBEDDING_MODEL_NAME: str = os.getenv("EMBEDDING_MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v2")
+    HF_TOKEN: str | None = os.getenv("HF_TOKEN")
 
     # Mock Data Paths
     MOCK_DATA_DIR: str = os.getenv("MOCK_DATA_DIR", "data/mock")
