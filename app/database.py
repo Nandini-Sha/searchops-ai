@@ -31,9 +31,9 @@ def init_db():
         embedding_func = embedding_functions.SentenceTransformerEmbeddingFunction(model_name=settings.EMBEDDING_MODEL_NAME)
         # Get or create collection
         try:
-            chroma_collection = chroma_client.get_collection(name="documents", embedding_function=embedding_func)
+            chroma_collection = chroma_client.get_collection(name="documents", embedding_function=embedding_func) # type: ignore
         except Exception:
-            chroma_collection = chroma_client.create_collection(name="documents", embedding_function=embedding_func)
+            chroma_collection = chroma_client.create_collection(name="documents", embedding_function=embedding_func) # type: ignore
         logger.info("ChromaDB initialized.")
     except Exception as e:
         logger.error(f"Failed to initialize ChromaDB: {e}")
