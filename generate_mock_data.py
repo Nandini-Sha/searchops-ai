@@ -2,7 +2,7 @@ import json
 import os
 import uuid
 from datetime import datetime, timedelta
-from config import settings
+from app.config import settings
 
 def generate_slack_messages():
     messages = [

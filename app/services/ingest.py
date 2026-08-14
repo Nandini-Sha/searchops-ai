@@ -123,6 +123,14 @@ def run_ingestion():
         collection.delete(where={})
     except Exception as e:
         logger.warning(f"Could not clear ChromaDB collection: {e}")
+        
+    try:
+        import generate_mock_data
+        generate_mock_data.generate_slack_messages()
+        generate_mock_data.generate_confluence_docs()
+        generate_mock_data.generate_github_repos()
+    except Exception as e:
+        logger.error(f"Failed to generate mock data: {e}")
     
     ingest_slack()
     ingest_confluence()
