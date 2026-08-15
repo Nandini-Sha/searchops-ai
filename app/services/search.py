@@ -80,9 +80,9 @@ class HybridSearchEngine:
                             doc_id, title, author, content, source_type = row
                             
                             # Check if we already added this doc
-                            if not any(r['doc_id'] == doc_id for r in search_results):
+                            if not any(r['doc_id'] == str(doc_id) for r in search_results):
                                 search_results.append({
-                                    "doc_id": doc_id,
+                                    "doc_id": str(doc_id),
                                     "score": 1.0, # Flat score for SQL matches
                                     "title": title,
                                     "author_name": author,
