@@ -33,6 +33,7 @@ def init_db():
     try:
         def configure(conn):
             conn.execute("CREATE EXTENSION IF NOT EXISTS vector;")
+            conn.execute("CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;")
             conn.commit()
             register_vector(conn)
 
