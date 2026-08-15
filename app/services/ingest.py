@@ -35,7 +35,7 @@ def insert_document(source_type, source_url, title, content, author_name):
         embedding = get_huggingface_embedding(text_to_embed)
     except Exception as e:
         logger.error(f"Error getting embedding for {title}: {e}")
-        return
+        embedding = None
 
     # Insert into PostgreSQL
     with get_pg_connection() as conn:

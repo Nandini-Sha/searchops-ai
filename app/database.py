@@ -13,10 +13,16 @@ def init_db():
     global pg_pool
 
     # Initialize Postgres Connection Pool
-    if settings.DATABASE_URL:
+    # Only use DATABASE_URL if it's explicitly a postgres URI to avoid conflicting with other DBs in environment
+    if settings.DATABASE_URL and settings.DATABASE_URL.startswith(("postgres://", "postgresql://")):
         conninfo = settings.DATABASE_URL
     else:
-        conninfo = f"dbname={settings.POSTGRES_DB} user={settings.POSTGRES_USER} password={settings.POSTGRES_PASSWORD} host={settings.POSTGRES_HOST} port={settings.POSTGRES_PORT}"
+        import urllib.parse
+        user = urllib.parse.quote(settings.POSTGRES_USER, safe="")
+        password = urllib.parse.quote(settings.POSTGRES_PASSWORD, safe="")
+        host = urllib.parse.quote(settings.POSTGRES_HOST, safe="")
+        dbname = urllib.parse.quote(settings.POSTGRES_DB, safe="")
+        conninfo = f"postgresql://{user}:{password}@{host}:{settings.POSTGRES_PORT}/{dbname}"
     
     try:
         def configure(conn):
