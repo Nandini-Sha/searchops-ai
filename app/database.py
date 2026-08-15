@@ -14,9 +14,15 @@ def init_db():
 
     # Initialize Postgres Connection Pool
     # Only use DATABASE_URL if it's explicitly a postgres URI to avoid conflicting with other DBs in environment
-    if settings.DATABASE_URL and settings.DATABASE_URL.startswith(("postgres://", "postgresql://")):
-        conninfo = settings.DATABASE_URL
+    db_url = settings.DATABASE_URL.strip() if settings.DATABASE_URL else None
+    
+    if db_url and db_url.startswith(("postgres://", "postgresql://")):
+        conninfo = db_url
+        logger.info("Using DATABASE_URL from environment.")
     else:
+        if settings.DATABASE_URL:
+            logger.warning(f"DATABASE_URL was set but ignored because it doesn't start with postgres:// or postgresql:// (Value starts with: {settings.DATABASE_URL[:10]}...)")
+        
         import urllib.parse
         user = urllib.parse.quote(settings.POSTGRES_USER, safe="")
         password = urllib.parse.quote(settings.POSTGRES_PASSWORD, safe="")
