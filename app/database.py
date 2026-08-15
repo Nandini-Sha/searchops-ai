@@ -33,6 +33,7 @@ def init_db():
     try:
         def configure(conn):
             conn.execute("CREATE EXTENSION IF NOT EXISTS vector;")
+            conn.commit()
             register_vector(conn)
 
         pg_pool = ConnectionPool(conninfo=conninfo, min_size=1, max_size=10, configure=configure)
